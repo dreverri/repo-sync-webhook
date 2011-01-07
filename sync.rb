@@ -56,8 +56,6 @@ def process_project(root, name, commit_id, remote, cmd)
   # Check out commit
   # What is the least surprising behavior when the commit path already exists?
   unless File.exists?commit_path
-    puts "Creating the directory #{commit_path}"
-    Dir.mkdir(commit_path)
     puts "Checking out #{commit_id}"
     checkout(cache_path, commit_path, commit_id)
 
