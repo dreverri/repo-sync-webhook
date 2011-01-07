@@ -13,24 +13,28 @@ get '/' do
 end
 
 post '/notify' do
-  payload = JSON.parse(params[:payload])
-  process_payload(payload, CONFIG)
+  process_request(params, CONFIG)
   "Thank you"
 end
 
-def process_payload(payload, config)
+def process_request(params, config)
+  payload = JSON.parse(params[:payload])
   name = payload['repository']['name']
   branch = payload["ref"].split("/").last
   commit_id = payload['after']
-  
+
   config[:projects].each do |project|
     if project[:name] == name && project[:branch] == branch
-      puts "Processing #{name}:#{branch}"
-      root = project[:root]
-      cmd = project[:cmd]
-      remote = url(payload, project)
-      
-      process_project(root, name, commit_id, remote, cmd)
+      if project[:token].nil? || project[:token] == params[:token]
+        puts "Processing #{name}:#{branch}"
+        root = project[:root]
+        cmd = project[:cmd]
+        remote = url(payload, project)
+
+        process_project(root, name, commit_id, remote, cmd)
+      else
+        puts "The provided token, #{params[:token]}, did not match"
+      end
     end
   end
 end
@@ -70,7 +74,7 @@ def mirror(repo, cache)
 end
 
 def fetch(cache)
-  %x[git --git-dir=#{cache} fetch]  
+  %x[git --git-dir=#{cache} fetch]
 end
 
 def checkout(cache, commit_path, commit_id)

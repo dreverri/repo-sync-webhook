@@ -16,6 +16,30 @@
   This app supports project definitions specified in a "config.yml"
   file. A [[./config.example.yml][sample]] is provided in this repository.
 
+* Projects
+
+  The config file should contain a list of projects. Each project should
+  define the following parameters:
+  * name - Name of the repository
+  * branch - Name of the branch to respond to
+  * token - Token to be matched to incoming requests (optional)
+  * root - The repository will be cloned to this directory
+  * cmd - Command to run when post commit hook is received
+
+  The assumption is that each defined project should be specific to a
+  particular repository and branch. When the incoming request matches
+  the defined repository, branch, and token the cmd will be executed.
+
+* Token
+
+  Projects may specify a token parameter. Incoming requests will be
+  expected to have a token query parameter with a value that matches
+  the value defined in the config file.
+
+  If a token is defined for a project the post commit URL should be
+  similar to the following:
+ http://hostname:4567/notify?token=project_token
+
 * Process
 
   When a post receive hook is received this app will do the following:
@@ -45,8 +69,6 @@
 
 * To Do
 
-  - Allow projects to specify a token parameter
-    (http://hostname:4567/notify?token=my_token)
   - Use mutex per project rather than Sinatra's global mutex
     (set :lock, true)
   - Package as a gem
