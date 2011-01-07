@@ -1,23 +1,86 @@
 require 'rubygems'
 require 'sinatra'
-require 'json/pure'
+require 'json'
 require 'yaml'
 
+# TODO: Make config file configurable
 CONFIG = YAML::load_file("config.yml") unless defined? CONFIG
+
+set :lock, true
 
 get '/' do
     'Nothing to see here'
 end
 
 post '/notify' do
-   payload = JSON.parse(params[:payload])
-   repo_dir = CONFIG["repo_dir"]
-   this_repo = repo_dir + "/" +  payload["repository"]["name"]
-   ref = payload["ref"].split("/").last
-   if ref == "master"
-     cmd = "pushd #{this_repo}; git fetch origin; git checkout master; git pull origin; popd"
-   else
-     cmd = "pushd #{this_repo}; git fetch origin; git checkout master; git branch -f #{ref} origin/#{ref}; popd"
-   end
-   system cmd
+  payload = JSON.parse(params[:payload])
+  process_payload(payload, CONFIG)
+  "Thank you"
+end
+
+def process_payload(payload, config)
+  name = payload['repository']['name']
+  branch = payload["ref"].split("/").last
+  commit_id = payload['after']
+  
+  config[:projects].each do |project|
+    if project[:name] == name && project[:branch] == branch
+      puts "Processing #{name}:#{branch}"
+      root = project[:root]
+      cmd = project[:cmd]
+      remote = url(payload, project)
+      
+      process_project(root, name, commit_id, remote, cmd)
+    end
+  end
+end
+
+def process_project(root, name, commit_id, remote, cmd)
+  repo_path = File.join(root, name)
+  cache_path = File.join(repo_path, "cache")
+  commit_path = File.join(repo_path, commit_id)
+
+  # Mirror repo or fetch updates
+  if File.exists?cache_path
+    puts "Fetching updates to #{cache_path}"
+    fetch(cache_path)
+  else
+    puts "Mirroring repository #{remote} to #{cache_path}"
+    mirror(remote, cache_path)
+  end
+
+  # Check out commit
+  # What is the least surprising behavior when the commit path already exists?
+  unless File.exists?commit_path
+    puts "Creating the directory #{commit_path}"
+    Dir.mkdir(commit_path)
+    puts "Checking out #{commit_id}"
+    checkout(cache_path, commit_path, commit_id)
+
+    # Change to commit directory and run cmd
+    puts "Running #{cmd}"
+    %x[cd #{commit_path} && #{cmd}]
+  else
+    puts "The directory for this commit already exists: #{commit_path}"
+  end
+end
+
+def mirror(repo, cache)
+  %x[git clone --mirror #{repo} #{cache}]
+end
+
+def fetch(cache)
+  %x[git --git-dir=#{cache} fetch]  
+end
+
+def checkout(cache, commit_path, commit_id)
+  clone = "git clone #{cache} #{commit_path}"
+  checkout_opts = "--git-dir=#{commit_path}/.git --work-tree=#{commit_path}"
+  checkout = "git #{checkout_opts} checkout -f #{commit_id}"
+  %x[#{clone} && #{checkout}]
+end
+
+def url(payload, project)
+  url = payload['repository']['url']
+  project[:git_url] || url.gsub(/https:\/\//, 'git://') + '.git'
 end

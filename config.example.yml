@@ -1,0 +1,5 @@
+:projects:
+  - :name: riak_wiki
+    :root: .
+    :branch: master
+    :cmd: gollum-site generate && (PREV=`readlink ../current`.. || PREV="") && rm -f ../current && ln -s `pwd`/_site ../current && ([ `pwd` -ef `cd $PREV && pwd` ] || rm -rf $PREV)

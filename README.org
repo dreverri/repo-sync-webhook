@@ -1,0 +1,52 @@
+* Description
+
+  Sinatra app that handles HTTP POSTs from GitHub's post-receive
+  webhook.
+
+* Usage
+
+  The following command will start a server on port 4567 bound to "0.0.0.0".
+
+#+BEGIN_SRC bash
+  ruby sync.rb
+#+END_SRC
+
+* Config
+
+  This app supports project definitions specified in a "config.yml"
+  file. A [[./config.example.yml][sample]] is provided in this repository.
+
+* Process
+
+  When a post receive hook is received this app will do the following:
+
+  - Read repository name, branch name, and commit id from payload
+  - Look for matching projects
+  - Mirror repository or fetch updates
+       #+BEGIN_SRC bash
+       # Mirror repository
+       git clone --mirror #{repository} #{cache}
+       #+END_SRC
+       #+BEGIN_SRC bash
+       # Fetch updates
+       git --git-dir=#{cache} fetch
+       #+END_SRC
+  - Checkout the commit
+       #+BEGIN_SRC
+       git clone #{cache} #{commit_path}
+       git --git-dir=#{commit_path}/.git --work-tree=#{commit_path} \
+       checkout -f #{commit_id}
+       #+END_SRC
+  - Change directory to the repository directory
+  - Run the cmd defined in the config
+
+  The cache and commit_path are directories created in the root
+  directory defined in the config file.
+
+* To Do
+
+  - Allow projects to specify a token parameter
+    (http://hostname:4567/notify?token=my_token)
+  - Use mutex per project rather than Sinatra's global mutex
+    (set :lock, true)
+  - Package as a gem
