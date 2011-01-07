@@ -20,11 +20,12 @@
 
   The config file should contain a list of projects. Each project should
   define the following parameters:
-  * name - Name of the repository
-  * branch - Name of the branch to respond to
-  * token - Token to be matched to incoming requests (optional)
-  * root - The repository will be cloned to this directory
-  * cmd - Command to run when post commit hook is received
+
+  - name :: Name of the repository
+  - branch :: Name of the branch to respond to
+  - token :: Token to be matched to incoming requests (optional)
+  - root :: The repository will be cloned to this directory
+  - cmd :: Command to run when post commit hook is received
 
   The assumption is that each defined project should be specific to a
   particular repository and branch. When the incoming request matches
@@ -37,8 +38,7 @@
   the value defined in the config file.
 
   If a token is defined for a project the post commit URL should be
-  similar to the following:
- http://hostname:4567/notify?token=project_token
+  similar to "http://hostname:4567/notify?token=project_token"
 
 * Process
 
