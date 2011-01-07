@@ -70,7 +70,7 @@ def process_project(root, name, commit_id, remote, cmd)
 end
 
 def mirror(repo, cache)
-  %x[git clone --mirror #{repo} #{cache}]
+  %x[git clone --bare #{repo} #{cache} && (cd #{cache} && git remote add --mirror origin #{repo})]
 end
 
 def fetch(cache)
