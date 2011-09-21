@@ -1,0 +1,5 @@
+wiki:
+  name: riak_wiki
+  branch: master
+  token: project_token
+  cmd: gollum-site generate
