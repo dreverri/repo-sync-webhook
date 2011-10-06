@@ -16,12 +16,11 @@ module GithubPostReceive
 
     def self.load_logger(hsh={})
       $logger.close if $logger
-      device = hsh['device'] || STDOUT
-      level = ::Logger.const_get(hsh['level'] || ENV['LOGGER_LEVEL'] || 'ERROR')
-      format = hsh['datetime_format'] || "%Y-%m-%d %H:%M:%S"
-      $logger = ::Logger.new(device)
-      $logger.level = level
-      $logger.datetime_format = format
+      $logger = ::Logger.new(hsh['device'] || STDOUT)
+      $logger.level = ::Logger.const_get(hsh['level'] || ENV['LOGGER_LEVEL'] || 'ERROR')
+      $logger.datetime_format = hsh['datetime_format'] || "%Y-%m-%d %H:%M:%S"
+      Grit.logger = $logger
+      Grit.debug = $logger.debug?
       $logger
     end
 
