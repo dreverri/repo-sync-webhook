@@ -4,10 +4,17 @@ module GithubPostReceive
 
     def self.from_params(params)
       payload = JSON.parse(params[:payload])
+      if payload['repository']['private']
+        owner_name = payload['repository']['owner']['name']
+        repo_name = payload['repository']['name']
+        url = "git@github.com:/#{owner_name}/#{repo_name}.git"
+      else
+        url = payload['repository']['url']
+      end
       new(payload['repository']['name'],
           payload['ref'].split('/').last,
           payload['after'],
-          payload['repository']['url'],
+          url,
           params[:token])
     end
     
