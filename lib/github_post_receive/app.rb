@@ -9,8 +9,27 @@ module GithubPostReceive
       set :projects, hsh.map { |path, config| Project.new(path, config) }
     end
 
+    def self.load_logger_config(fname)
+      hsh = YAML.load(ERB.new(File.read(File.expand_path(fname))).result)
+      self.load_logger(hsh)
+    end
+
+    def self.load_logger(hsh={})
+      $logger.close if $logger
+      device = hsh['device'] || STDOUT
+      level = ::Logger.const_get(hsh['level'] || ENV['LOGGER_LEVEL'] || 'ERROR')
+      format = hsh['datetime_format'] || "%Y-%m-%d %H:%M:%S"
+      $logger = ::Logger.new(device)
+      $logger.level = level
+      $logger.datetime_format = format
+      $logger
+    end
+
+    def self.logger
+      $logger ||= load_logger
+    end
+
     configure do
-      use Rack::Logger
       enable :lock
     end
 
@@ -38,7 +57,7 @@ module GithubPostReceive
       end
 
       def logger
-        env['rack.logger'] 
+        self.class.logger
       end
     end
   end
