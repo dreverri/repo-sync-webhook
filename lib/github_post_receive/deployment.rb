@@ -16,14 +16,16 @@ module GithubPostReceive
     end
 
     def clone
+      options = {:raise => true, :timeout => @project.timeout}
       App.logger.debug "Adding #{@remote} as 'origin'"
-      @repo.remote_add('origin', @remote)
+      @repo.git.remote(options, 'add', 'origin', @remote)
       App.logger.debug "Fetching #{@remote}"
-      @repo.remote_fetch('origin')
+      @repo.git.fetch(options, 'origin')
     end
 
     def checkout
       @repo.git.checkout({:raise => true,
+                           :timeout => @project.timeout,
                            :base => false,
                            :chdir => @repo.working_dir}, @commit_id)
     end
@@ -33,15 +35,15 @@ module GithubPostReceive
       process = Child.new(@project.cmd, :chdir => @repo.working_dir)
       raise process.err unless process.status.success?
       return true
-    rescue => e
-      App.logger.error "Project command (#{@project.cmd}) failed: #{e.message}"
-      return false
     end
 
     def deploy
       clone
       checkout
       run
+    rescue => e
+      App.logger.error "Deploy failed [#{@project.name}][#{@project.path}][#{@commit_id}]: #{e.inspect}"
+      return false
     end
   end
 end

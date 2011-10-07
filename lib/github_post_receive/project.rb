@@ -1,6 +1,6 @@
 module GithubPostReceive
   class Project
-    attr_reader :path, :name, :branch, :cmd, :token
+    attr_reader :path, :name, :branch, :cmd, :token, :timeout
     
     def initialize(path, options = {})
       @path = path
@@ -8,6 +8,7 @@ module GithubPostReceive
       @branch = options['branch']
       @cmd = options['cmd']
       @token = options['token']
+      @timeout = options['timeout'] || false
     end
 
     def match?(payload)
