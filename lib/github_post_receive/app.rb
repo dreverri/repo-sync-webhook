@@ -49,6 +49,7 @@ module GithubPostReceive
             project.deploy(payload.url, payload.commit_id)
           end
         end
+      rescue GithubPostReceive::AlreadyDeployed
       end
 
       def url(payload, project)

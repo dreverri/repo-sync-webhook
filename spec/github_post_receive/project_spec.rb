@@ -44,4 +44,11 @@ describe "project deploy" do
       ['bar', 'foo', 'new.txt']
     Dir.exists?(File.join(@project.path, @c1)).should_not be_true
   end
+
+  it "should raise an exception if already deployed" do
+    lambda { @project.deploy(@repo.path, @c1) }.
+      should raise_error GithubPostReceive::AlreadyDeployed
+    Dir.exists?(File.join(@project.path, @c1, '.git')).should be_true
+    File.exists?(File.join(@project.path, @c1, 'new.txt')).should be_true
+  end
 end

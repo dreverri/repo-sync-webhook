@@ -1,4 +1,5 @@
 module GithubPostReceive
+  class AlreadyDeployed < StandardError; end
   class Deployment
     include POSIX::Spawn
 
@@ -9,7 +10,9 @@ module GithubPostReceive
       @project = project
       @remote = remote
       @commit_id = commit_id
-      @repo = Grit::Repo.init(File.join(@project.path, @commit_id))
+      path = File.join(@project.path, @commit_id)
+      raise AlreadyDeployed.new(path) if File.exists? path
+      @repo = Grit::Repo.init(path)
     end
 
     def clone
