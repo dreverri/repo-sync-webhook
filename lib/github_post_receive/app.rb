@@ -49,7 +49,8 @@ module GithubPostReceive
             project.deploy(payload.url, payload.commit_id)
           end
         end
-      rescue GithubPostReceive::AlreadyDeployed
+      rescue GithubPostReceive::AlreadyDeployed => e
+        logger.error("Received notification for an already deployed commit: #{e.message}")
       end
 
       def url(payload, project)

@@ -36,6 +36,8 @@ describe "application" do
       "ref" => "master",
       "after" => @c1
     }
+    @payload2 = @payload.dup
+    @payload2['after'] = @c2
 
     post '/notify', {:payload => @payload.to_json}
   end
@@ -53,14 +55,23 @@ describe "application" do
     File.exists?(File.join(@path, @c1, 'new.txt')).should be_true
   end
 
-  describe "when deployed multiple times" do
+  describe "double posts" do
     before do
-      @payload["after"] = @c2
+      @hsh[@path]['cmd'] = "touch other.txt"
+      GithubPostReceive::App.load_hash(@hsh)
+      post '/notify', {:payload => @payload.to_json}
     end
     
+    it "should not re-run already deployed commits" do
+      File.exists?(File.join(@path, @c1, 'new.txt')).should be_true
+      File.exists?(File.join(@path, @c1, 'other.txt')).should_not be_true
+    end
+  end
+
+  describe "when deployed multiple times" do
     describe "and cmd passes" do
       before do
-        post '/notify', {:payload => @payload.to_json}
+        post '/notify', {:payload => @payload2.to_json}
       end
       
       it "should update the current symlink" do
@@ -76,7 +87,7 @@ describe "application" do
       before do
         @hsh[@path]['cmd'] = "false"
         GithubPostReceive::App.load_hash(@hsh)
-        post '/notify', {:payload => @payload.to_json}
+        post '/notify', {:payload => @payload2.to_json}
       end
       
       it "should not change symlink" do
