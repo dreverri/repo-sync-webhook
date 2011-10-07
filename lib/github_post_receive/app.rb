@@ -46,7 +46,8 @@ module GithubPostReceive
         payload = Payload.from_params(params)
         projects.each do |project|
           if project.match?(payload)
-            project.deploy(payload.url, payload.commit_id)
+            async = (params[:async] == "true")
+            project.deploy(payload.url, payload.commit_id, async)
           end
         end
       rescue GithubPostReceive::AlreadyDeployed => e

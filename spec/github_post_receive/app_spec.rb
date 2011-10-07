@@ -55,6 +55,24 @@ describe "application" do
     File.exists?(File.join(@path, @c1, 'new.txt')).should be_true
   end
 
+  describe "aync process" do
+    before do
+      @hsh[@path]['cmd'] = "sleep 1; touch other.txt"
+      GithubPostReceive::App.load_hash(@hsh)
+      post '/notify?async=true', {:payload => @payload2.to_json}
+    end
+
+    it "should return immediately" do
+      File.exists?(File.join(@path, @c2, 'other.txt')).should_not be_true
+      last_response.should be_ok
+    end
+
+    it "should deploy asynchronously" do
+      sleep(2)
+      File.exists?(File.join(@path, @c2, 'other.txt')).should be_true
+    end
+  end
+
   describe "double posts" do
     before do
       @hsh[@path]['cmd'] = "touch other.txt"

@@ -20,8 +20,21 @@ module GithubPostReceive
       File.join(@path, 'current')
     end
     
-    def deploy(remote, commit_id)
-      deployment = Deployment.new(self, remote, commit_id)
+    def deploy(remote, commit_id, async=false)
+      # Prepare deployment before starting work in the background in
+      # order to prevent a race condition between multiple
+      # deployments. This assumes the starting process (e.g. a Sinatra
+      # application) maintains a lock per project directory
+      deployment = prepare(remote, commit_id)
+      thread = Thread.new { really_deploy(deployment) }
+      thread.join unless async
+    end
+
+    def prepare(remote, commit_id)
+      Deployment.new(self, remote, commit_id)
+    end
+
+    def really_deploy(deployment)
       new_path = deployment.repo.working_dir
       if deployment.deploy
         if File.symlink?(link_path)
