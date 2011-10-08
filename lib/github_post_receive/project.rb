@@ -1,6 +1,6 @@
 module GithubPostReceive
   class Project
-    attr_reader :path, :name, :branch, :cmd, :token, :timeout
+    attr_accessor :path, :name, :branch, :cmd, :token, :timeout
     
     def initialize(path, options = {})
       @path = path

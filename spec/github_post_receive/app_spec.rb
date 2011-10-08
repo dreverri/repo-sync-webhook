@@ -57,17 +57,13 @@ describe "application" do
 
   describe "aync process" do
     before do
-      @hsh[@path]['cmd'] = "sleep 1; touch other.txt"
-      GithubPostReceive::App.load_hash(@hsh)
+      GithubPostReceive::App.projects.first.cmd = "sleep 1; touch other.txt"
       post '/notify?async=true', {:payload => @payload2.to_json}
     end
 
-    it "should return immediately" do
+    it "should return immediately and deploy asynchronously" do
       File.exists?(File.join(@path, @c2, 'other.txt')).should_not be_true
       last_response.should be_ok
-    end
-
-    it "should deploy asynchronously" do
       sleep(2)
       File.exists?(File.join(@path, @c2, 'other.txt')).should be_true
     end
@@ -75,8 +71,7 @@ describe "application" do
 
   describe "double posts" do
     before do
-      @hsh[@path]['cmd'] = "touch other.txt"
-      GithubPostReceive::App.load_hash(@hsh)
+      GithubPostReceive::App.projects.first.cmd = "touch other.txt"
       post '/notify', {:payload => @payload.to_json}
     end
     
@@ -103,8 +98,7 @@ describe "application" do
 
     describe "and cmd fails" do
       before do
-        @hsh[@path]['cmd'] = "false"
-        GithubPostReceive::App.load_hash(@hsh)
+        GithubPostReceive::App.projects.first.cmd = "false"
         post '/notify', {:payload => @payload2.to_json}
       end
       
